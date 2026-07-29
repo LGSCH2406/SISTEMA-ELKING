@@ -1,0 +1,53 @@
+<div class="topbar">
+  <div class="caja-status" id="cajaStatus">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;">
+      <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+    <span id="cajaMonto">Caja abierta · S/ 200.00</span>
+  </div>
+  <div class="top-actions">
+    <button class="icon-btn" onclick="window.toggleFormatos(true)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:17px;height:17px;">
+        <path d="M6 9V3h12v6"/>
+        <rect x="4" y="9" width="16" height="8" rx="1.5"/>
+        <path d="M6 13h12v8H6z"/>
+      </svg>
+    </button>
+    <svg class="bell" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M6 9a6 6 0 1112 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9z"/>
+      <path d="M10 19a2 2 0 004 0"/>
+    </svg>
+    <div class="avatar-chip" id="avatarChip">
+      <div class="avatar" id="avatarInicialTopbar">JR</div>
+      <div>
+        <div class="name" id="nombreTopbar">Jorge Ramírez</div>
+        <div class="role" id="rolTopbar">Administrador</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Cargar datos del usuario y caja
+  (function() {
+    var userData = sessionStorage.getItem('user');
+    if (userData) {
+      try {
+        var user = JSON.parse(userData);
+        var avatarEl = document.getElementById('avatarInicialTopbar');
+        var nombreEl = document.getElementById('nombreTopbar');
+        var rolEl = document.getElementById('rolTopbar');
+        if (avatarEl) avatarEl.textContent = user.initials || 'U';
+        if (nombreEl) nombreEl.textContent = user.name || 'Usuario';
+        if (rolEl) rolEl.textContent = user.role || 'Usuario';
+      } catch(e) { console.error('Error cargando usuario:', e); }
+    }
+    
+    var monto = sessionStorage.getItem('montoApertura');
+    if (monto) {
+      var cajaEl = document.getElementById('cajaMonto');
+      if (cajaEl) cajaEl.textContent = 'Caja abierta · S/ ' + parseFloat(monto).toFixed(2);
+    }
+  })();
+</script>

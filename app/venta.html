@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Venta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-interno"></div>
+
+    <div class="main-col">
+      <div id="topbar-interno"></div>
+
+      <div class="content">
+        <div class="content-head">
+          <div>
+            <h1>Nueva venta</h1>
+            <p>Selecciona productos para agregar al carrito</p>
+          </div>
+          <div class="orden-badge">
+            Orden #<strong id="ordenNumero">0245</strong>
+            <button class="btn-sm outline" onclick="limpiarCarrito()">Nueva orden</button>
+          </div>
+        </div>
+        
+        <div class="pos-grid">
+          <!-- Panel izquierdo: Productos -->
+          <div>
+            <div class="search" style="max-width:100%;margin-bottom:16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M21 21l-4.3-4.3"/>
+              </svg>
+              <input type="text" id="buscarProductoPos" placeholder="Buscar producto por nombre o código..." oninput="filtrarProductosPos()" class="search-input">
+            </div>
+            <div class="pos-products" id="productosDisponibles">
+              <!-- Productos cargados dinámicamente -->
+            </div>
+          </div>
+          
+          <!-- Panel derecho: Carrito -->
+          <div class="card">
+            <div class="card-head">
+              <h3>Carrito — Orden #<span id="ordenNumeroCarrito">0245</span></h3>
+              <span class="cart-items-count" id="cantidadItems">0 items</span>
+            </div>
+            <div class="card-body" id="carritoBody">
+              <div id="carritoContainer">
+                <div class="cart-empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="9" cy="20" r="1.4"/>
+                    <circle cx="18" cy="20" r="1.4"/>
+                    <path d="M2.5 3h2.5l2.6 12.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 7H6"/>
+                  </svg>
+                  <p>Carrito vacío</p>
+                  <p class="cart-empty-sub">Agrega productos para comenzar</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Resumen del carrito -->
+            <div class="cart-footer">
+              <div class="cart-total">
+                <span>Total</span>
+                <span id="totalCarrito">S/ 0.00</span>
+              </div>
+              
+              <div class="pay-methods">
+                <button class="active" data-metodo="efectivo" onclick="seleccionarMetodo('efectivo')">Efectivo</button>
+                <button data-metodo="tarjeta" onclick="seleccionarMetodo('tarjeta')">Tarjeta</button>
+                <button data-metodo="yape" onclick="seleccionarMetodo('yape')">Yape/Plin</button>
+              </div>
+              
+              <button class="btn-primary" onclick="procesarCobro()" id="btnCobrar" disabled>
+                Cobrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">Multiservicios El King · Panel interno de gestión</footer>
+    </div>
+  </div>
+
+  <div id="modal-formatos"></div>
+
+  <script>
+    // ============================================
+    // DATOS DE PRODUCTOS PARA VENTA
+    // ============================================
+    const productosVenta = [
+      { id: 1, nombre: 'Kit de arrastre KTM', stock: 24, precio: 120.00, categoria: 'Transmisión' },
+      { id: 2, nombre: 'Pastillas de freno', stock: 3, precio: 28.00, categoria: 'Frenos' },
+      { id: 3, nombre: 'Aceite 10W-40', stock: 40, precio: 35.00, categoria: 'Motor' },
+      { id: 4, nombre: 'Batería 12V', stock: 0, precio: 80.00, categoria: 'Eléctrico' },
+      { id: 5, nombre: 'Filtro de aire', stock: 18, precio: 45.00, categoria: 'Motor' },
+      { id: 6, nombre: 'Cadena 520', stock: 4, precio: 60.00, categoria: 'Transmisión' },
+      { id: 7, nombre: 'Casco integral', stock: 12, precio: 150.00, categoria: 'Accesorios' },
+      { id: 8, nombre: 'Guantes protección', stock: 8, precio: 55.00, categoria: 'Accesorios' }
+    ];
+
+    let carrito = [];
+    let metodoPago = 'efectivo';
+    let numeroOrden = 245;
+
+    // ============================================
+    // RENDERIZAR PRODUCTOS
+    // ============================================
+    function renderizarProductosPos(lista) {
+      const container = document.getElementById('productosDisponibles');
+      
+      if (lista.length === 0) {
+        container.innerHTML = `
+          <div class="no-products-found">
+            No se encontraron productos
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = lista.map(p => {
+        const agotado = p.stock <= 0;
+        return `
+          <div class="pos-item ${agotado ? 'pos-item-agotado' : ''}" onclick="${agotado ? '' : `agregarAlCarrito(${p.id})`}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:26px;height:26px;">
+              <path d="M14.7 6.3a4 4 0 00-5.6 5L3 17.4 5.6 20l6.1-6.1a4 4 0 005-5.6L14 11 12 9l2.7-2.7z"/>
+            </svg>
+            <div class="pos-item-name">${p.nombre}</div>
+            <div class="pos-item-stock ${agotado ? 'stock-agotado' : ''}">${agotado ? 'Sin stock' : p.stock + ' disp.'}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filtrarProductosPos() {
+      const busqueda = document.getElementById('buscarProductoPos').value.toLowerCase().trim();
+      let filtrados = productosVenta;
+      if (busqueda) {
+        filtrados = productosVenta.filter(p => 
+          p.nombre.toLowerCase().includes(busqueda) || 
+          p.categoria.toLowerCase().includes(busqueda)
+        );
+      }
+      renderizarProductosPos(filtrados);
+    }
+
+    // ============================================
+    // CARRITO
+    // ============================================
+    function agregarAlCarrito(id) {
+      const producto = productosVenta.find(p => p.id === id);
+      if (!producto || producto.stock <= 0) return;
+      
+      const itemExistente = carrito.find(item => item.id === id);
+      
+      if (itemExistente) {
+        if (itemExistente.cantidad < producto.stock) {
+          itemExistente.cantidad++;
+        } else {
+          alert('No hay suficiente stock disponible');
+          return;
+        }
+      } else {
+        carrito.push({
+          id: producto.id,
+          nombre: producto.nombre,
+          precio: producto.precio,
+          cantidad: 1,
+          stock: producto.stock
+        });
+      }
+      
+      actualizarCarrito();
+    }
+
+    function actualizarCarrito() {
+      const container = document.getElementById('carritoContainer');
+      const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+      const totalPrecio = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      
+      document.getElementById('cantidadItems').textContent = totalItems + ' items';
+      document.getElementById('totalCarrito').textContent = 'S/ ' + totalPrecio.toFixed(2);
+      document.getElementById('ordenNumeroCarrito').textContent = String(numeroOrden).padStart(4, '0');
+      
+      document.getElementById('btnCobrar').disabled = carrito.length === 0;
+      
+      if (carrito.length === 0) {
+        container.innerHTML = `
+          <div class="cart-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="9" cy="20" r="1.4"/>
+              <circle cx="18" cy="20" r="1.4"/>
+              <path d="M2.5 3h2.5l2.6 12.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 7H6"/>
+            </svg>
+            <p>Carrito vacío</p>
+            <p class="cart-empty-sub">Agrega productos para comenzar</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = `
+        <ul class="cart-list">
+          ${carrito.map((item, index) => `
+            <li class="cart-row">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.nombre}</div>
+                <div class="cart-item-price">S/ ${item.precio.toFixed(2)} c/u</div>
+              </div>
+              <div class="cart-item-actions">
+                <div class="cart-item-controls">
+                  <button class="qty-btn" onclick="cambiarCantidad(${index}, -1)">−</button>
+                  <span class="qty-value">${item.cantidad}</span>
+                  <button class="qty-btn" onclick="cambiarCantidad(${index}, 1)">+</button>
+                </div>
+                <button class="cart-item-remove" onclick="eliminarDelCarrito(${index})">✕</button>
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+    }
+
+    function cambiarCantidad(index, cambio) {
+      const item = carrito[index];
+      const nuevoStock = item.cantidad + cambio;
+      
+      if (nuevoStock > item.stock) {
+        alert('No hay suficiente stock disponible');
+        return;
+      }
+      
+      if (nuevoStock <= 0) {
+        carrito.splice(index, 1);
+      } else {
+        item.cantidad = nuevoStock;
+      }
+      
+      actualizarCarrito();
+    }
+
+    function eliminarDelCarrito(index) {
+      carrito.splice(index, 1);
+      actualizarCarrito();
+    }
+
+    function limpiarCarrito() {
+      if (carrito.length === 0) return;
+      if (confirm('¿Estás seguro de limpiar el carrito?')) {
+        carrito = [];
+        numeroOrden++;
+        document.getElementById('ordenNumero').textContent = String(numeroOrden).padStart(4, '0');
+        actualizarCarrito();
+      }
+    }
+
+    // ============================================
+    // MÉTODOS DE PAGO
+    // ============================================
+    function seleccionarMetodo(metodo) {
+      metodoPago = metodo;
+      document.querySelectorAll('.pay-methods button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.metodo === metodo);
+      });
+    }
+
+    // ============================================
+    // PROCESAR COBRO
+    // ============================================
+    function procesarCobro() {
+      if (carrito.length === 0) {
+        alert('El carrito está vacío');
+        return;
+      }
+      
+      const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      const metodoNombres = {
+        efectivo: 'Efectivo',
+        tarjeta: 'Tarjeta',
+        yape: 'Yape/Plin'
+      };
+      
+      const confirmacion = confirm(
+        `🛒 Confirmar venta\n\n` +
+        `Total: S/ ${total.toFixed(2)}\n` +
+        `Método: ${metodoNombres[metodoPago]}\n` +
+        `Items: ${carrito.reduce((sum, i) => sum + i.cantidad, 0)}\n\n` +
+        `¿Confirmar cobro?`
+      );
+      
+      if (confirmacion) {
+        carrito.forEach(item => {
+          const producto = productosVenta.find(p => p.id === item.id);
+          if (producto) {
+            producto.stock -= item.cantidad;
+          }
+        });
+        
+        alert(`✅ Venta completada!\n\nTotal: S/ ${total.toFixed(2)}\nMétodo: ${metodoNombres[metodoPago]}`);
+        
+        carrito = [];
+        numeroOrden++;
+        document.getElementById('ordenNumero').textContent = String(numeroOrden).padStart(4, '0');
+        actualizarCarrito();
+        renderizarProductosPos(productosVenta);
+        filtrarProductosPos();
+      }
+    }
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+      
+      renderizarProductosPos(productosVenta);
+      actualizarCarrito();
+      document.getElementById('ordenNumero').textContent = String(numeroOrden).padStart(4, '0');
+    });
+  </script>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

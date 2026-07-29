@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Almacén</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-interno"></div>
+
+    <div class="main-col">
+      <div id="topbar-interno"></div>
+
+      <div class="content">
+        <div class="content-head">
+          <div>
+            <h1>Almacén</h1>
+            <p id="resumenProductos">Cargando productos...</p>
+          </div>
+          <button class="btn-sm" onclick="abrirModalProducto()">
+            <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Agregar repuesto
+          </button>
+        </div>
+
+        <div class="filters">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px;">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="M21 21l-4.3-4.3"/>
+            </svg>
+            <input type="text" id="buscarProducto" placeholder="Buscar producto o código..." oninput="filtrarProductos()">
+          </div>
+          <select id="filtroCategoria" onchange="filtrarProductos()">
+            <option value="todas">Categoría: Todas</option>
+            <option value="Motor">Motor</option>
+            <option value="Frenos">Frenos</option>
+            <option value="Transmisión">Transmisión</option>
+            <option value="Eléctrico">Eléctrico</option>
+            <option value="Accesorios">Accesorios</option>
+          </select>
+          <select id="filtroEstado" onchange="filtrarProductos()">
+            <option value="todos">Estado: Todos</option>
+            <option value="disponible">Disponible</option>
+            <option value="stock-bajo">Stock bajo</option>
+            <option value="agotado">Agotado</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div class="card-body" style="padding-top:12px; overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Stock</th>
+                  <th>Costo</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaProductos">
+                <!-- Los productos se cargarán aquí dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">Multiservicios El King · Panel interno de gestión</footer>
+    </div>
+  </div>
+
+  <div id="modal-formatos"></div>
+
+  <!-- Modal para agregar/editar producto -->
+  <div class="modal-overlay" id="modalProducto" onclick="if(event.target===this) cerrarModalProducto()">
+    <div class="modal-box" style="max-width:500px;">
+      <div class="modal-head">
+        <h3 id="modalProductoTitulo">Nuevo repuesto</h3>
+        <button onclick="cerrarModalProducto()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formProducto" onsubmit="guardarProducto(event)">
+          <input type="hidden" id="editIndex" value="-1">
+          
+          <div class="field">
+            <label>Código</label>
+            <input type="text" id="prodCodigo" placeholder="EK-0000" required>
+          </div>
+          
+          <div class="field">
+            <label>Producto</label>
+            <input type="text" id="prodNombre" placeholder="Nombre del producto" required>
+          </div>
+          
+          <div class="field">
+            <label>Categoría</label>
+            <select id="prodCategoria" required>
+              <option value="Motor">Motor</option>
+              <option value="Frenos">Frenos</option>
+              <option value="Transmisión">Transmisión</option>
+              <option value="Eléctrico">Eléctrico</option>
+              <option value="Accesorios">Accesorios</option>
+            </select>
+          </div>
+          
+          <div class="field">
+            <label>Stock</label>
+            <input type="number" id="prodStock" placeholder="0" min="0" required>
+          </div>
+          
+          <div class="field">
+            <label>Costo (S/)</label>
+            <input type="number" id="prodCosto" placeholder="0.00" min="0" step="0.01" required>
+          </div>
+          
+          <button type="submit" class="btn-primary">Guardar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // DATOS DE PRODUCTOS (simulados)
+    // ============================================
+    let productos = [
+      { codigo: 'EK-0231', nombre: 'Kit de arrastre KTM 390', categoria: 'Transmisión', stock: 24, costo: 120.00 },
+      { codigo: 'EK-0187', nombre: 'Pastillas de freno delanteras', categoria: 'Frenos', stock: 3, costo: 28.00 },
+      { codigo: 'EK-0142', nombre: 'Batería 12V 8Ah', categoria: 'Eléctrico', stock: 0, costo: 80.00 },
+      { codigo: 'EK-0203', nombre: 'Cadena de transmisión 520', categoria: 'Transmisión', stock: 4, costo: 60.00 },
+      { codigo: 'EK-0156', nombre: 'Aceite motor 10W-40', categoria: 'Motor', stock: 40, costo: 35.00 },
+      { codigo: 'EK-0221', nombre: 'Filtro de aire deportivo', categoria: 'Motor', stock: 18, costo: 45.00 },
+      { codigo: 'EK-0199', nombre: 'Casco integral', categoria: 'Accesorios', stock: 12, costo: 150.00 },
+      { codigo: 'EK-0177', nombre: 'Guantes de protección', categoria: 'Accesorios', stock: 8, costo: 55.00 }
+    ];
+
+    // ============================================
+    // FUNCIONES DE RENDERIZADO
+    // ============================================
+    function obtenerEstado(stock) {
+      if (stock <= 0) return { texto: 'Agotado', clase: 'danger' };
+      if (stock <= 5) return { texto: 'Stock bajo', clase: 'warn' };
+      return { texto: 'Disponible', clase: 'ok' };
+    }
+
+    function renderizarProductos(lista) {
+      const tbody = document.getElementById('tablaProductos');
+      const total = lista.length;
+      const stockBajo = lista.filter(p => p.stock > 0 && p.stock <= 5).length;
+      
+      // Actualizar resumen
+      document.getElementById('resumenProductos').textContent = 
+        `${total} productos registrados · ${stockBajo} con stock bajo`;
+
+      if (lista.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">
+              No se encontraron productos
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = lista.map((p, index) => {
+        const estado = obtenerEstado(p.stock);
+        const stockBarWidth = Math.min((p.stock / 50) * 100, 100);
+        const barColor = p.stock <= 0 ? 'var(--orange-dark)' : p.stock <= 5 ? 'var(--gold)' : 'var(--orange)';
+        
+        return `
+          <tr>
+            <td><strong>${p.codigo}</strong></td>
+            <td>${p.nombre}</td>
+            <td>${p.categoria}</td>
+            <td>
+              <span class="stock-bar"><span style="width:${stockBarWidth}%;background:${barColor}"></span></span>
+              ${p.stock} u.
+            </td>
+            <td>S/ ${p.costo.toFixed(2)}</td>
+            <td><span class="badge ${estado.clase}">${estado.texto}</span></td>
+            <td class="row-actions">
+              <a class="edit" href="#" onclick="editarProducto(${index})">Editar</a>
+              <a href="#" onclick="eliminarProducto(${index})" style="color:var(--danger);">Eliminar</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // FILTROS
+    // ============================================
+    function filtrarProductos() {
+      const busqueda = document.getElementById('buscarProducto').value.toLowerCase().trim();
+      const categoria = document.getElementById('filtroCategoria').value;
+      const estado = document.getElementById('filtroEstado').value;
+
+      let filtrados = productos.filter(p => {
+        // Filtro por búsqueda
+        if (busqueda && !p.codigo.toLowerCase().includes(busqueda) && !p.nombre.toLowerCase().includes(busqueda)) {
+          return false;
+        }
+        // Filtro por categoría
+        if (categoria !== 'todas' && p.categoria !== categoria) {
+          return false;
+        }
+        // Filtro por estado
+        if (estado !== 'todos') {
+          const estadoObj = obtenerEstado(p.stock);
+          if (estado === 'disponible' && estadoObj.clase !== 'ok') return false;
+          if (estado === 'stock-bajo' && estadoObj.clase !== 'warn') return false;
+          if (estado === 'agotado' && estadoObj.clase !== 'danger') return false;
+        }
+        return true;
+      });
+
+      renderizarProductos(filtrados);
+    }
+
+    // ============================================
+    // CRUD DE PRODUCTOS
+    // ============================================
+    function abrirModalProducto() {
+      document.getElementById('modalProductoTitulo').textContent = 'Nuevo repuesto';
+      document.getElementById('editIndex').value = '-1';
+      document.getElementById('formProducto').reset();
+      document.getElementById('modalProducto').classList.add('open');
+    }
+
+    function cerrarModalProducto() {
+      document.getElementById('modalProducto').classList.remove('open');
+    }
+
+    function editarProducto(index) {
+      const p = productos[index];
+      document.getElementById('modalProductoTitulo').textContent = 'Editar repuesto';
+      document.getElementById('editIndex').value = index;
+      document.getElementById('prodCodigo').value = p.codigo;
+      document.getElementById('prodNombre').value = p.nombre;
+      document.getElementById('prodCategoria').value = p.categoria;
+      document.getElementById('prodStock').value = p.stock;
+      document.getElementById('prodCosto').value = p.costo;
+      document.getElementById('modalProducto').classList.add('open');
+    }
+
+    function guardarProducto(event) {
+      event.preventDefault();
+      const index = parseInt(document.getElementById('editIndex').value);
+      const codigo = document.getElementById('prodCodigo').value.trim();
+      const nombre = document.getElementById('prodNombre').value.trim();
+      const categoria = document.getElementById('prodCategoria').value;
+      const stock = parseInt(document.getElementById('prodStock').value) || 0;
+      const costo = parseFloat(document.getElementById('prodCosto').value) || 0;
+
+      const nuevoProducto = { codigo, nombre, categoria, stock, costo };
+
+      if (index === -1) {
+        // Agregar nuevo
+        productos.push(nuevoProducto);
+      } else {
+        // Editar existente
+        productos[index] = nuevoProducto;
+      }
+
+      cerrarModalProducto();
+      filtrarProductos();
+    }
+
+    function eliminarProducto(index) {
+      if (confirm(`¿Estás seguro de eliminar "${productos[index].nombre}"?`)) {
+        productos.splice(index, 1);
+        filtrarProductos();
+      }
+    }
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verificar sesión
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+      
+      // Renderizar productos
+      renderizarProductos(productos);
+      
+      // Cerrar modal con Escape
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') cerrarModalProducto();
+      });
+    });
+  </script>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

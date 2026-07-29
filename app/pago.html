@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Pago</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-interno"></div>
+
+    <div class="main-col">
+      <div id="topbar-interno"></div>
+
+      <div class="content">
+        <div class="content-head">
+          <div>
+            <h1>Pago / Caja</h1>
+            <p>Estado de caja del turno actual</p>
+          </div>
+          <button class="btn-sm dark" onclick="cerrarCaja()">Cerrar caja</button>
+        </div>
+
+        <div class="caja-resumen" id="resumenCaja">
+          <div class="caja-box">
+            <div class="caja-box-label">Monto de apertura</div>
+            <div class="caja-box-value" id="montoAperturaDisplay">S/ 0.00</div>
+          </div>
+          <div class="caja-box">
+            <div class="caja-box-label">Ventas en efectivo</div>
+            <div class="caja-box-value" id="ventasEfectivo">S/ 0.00</div>
+          </div>
+          <div class="caja-box">
+            <div class="caja-box-label">Ventas con tarjeta / Yape</div>
+            <div class="caja-box-value" id="ventasDigital">S/ 0.00</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Movimientos de caja</h3>
+            <button class="btn-sm outline" onclick="agregarMovimiento()" style="padding:4px 12px;font-size:11px;">+ Agregar</button>
+          </div>
+          <div class="card-body" style="padding-top:10px; overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Tipo</th>
+                  <th>Concepto</th>
+                  <th>Método</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody id="tablaMovimientos">
+                <!-- Movimientos cargados dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">Multiservicios El King · Panel interno de gestión</footer>
+    </div>
+  </div>
+
+  <div id="modal-formatos"></div>
+
+  <!-- Modal para agregar movimiento -->
+  <div class="modal-overlay" id="modalMovimiento" onclick="if(event.target===this) cerrarModalMovimiento()">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-head">
+        <h3>Nuevo movimiento</h3>
+        <button onclick="cerrarModalMovimiento()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formMovimiento" onsubmit="guardarMovimiento(event)">
+          <div class="field">
+            <label>Tipo</label>
+            <select id="movTipo" required>
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Concepto</label>
+            <input type="text" id="movConcepto" placeholder="Ej. Venta #0245" required>
+          </div>
+          <div class="field">
+            <label>Método</label>
+            <select id="movMetodo" required>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Yape/Plin">Yape/Plin</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Monto (S/)</label>
+            <input type="number" id="movMonto" placeholder="0.00" min="0" step="0.01" required>
+          </div>
+          <button type="submit" class="btn-primary">Agregar movimiento</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // DATOS DE MOVIMIENTOS
+    // ============================================
+    let movimientos = [
+      { hora: '09:02', tipo: 'ingreso', concepto: 'Apertura de caja', metodo: 'Efectivo', monto: 200.00 },
+      { hora: '10:15', tipo: 'ingreso', concepto: 'Venta #0231', metodo: 'Efectivo', monto: 180.00 },
+      { hora: '11:40', tipo: 'ingreso', concepto: 'Venta #0238', metodo: 'Tarjeta', monto: 220.00 },
+      { hora: '12:30', tipo: 'egreso', concepto: 'Compra de insumos de limpieza', metodo: 'Efectivo', monto: 25.00 }
+    ];
+
+    let montoApertura = 0;
+
+    // ============================================
+    // RENDERIZAR MOVIMIENTOS
+    // ============================================
+    function renderizarMovimientos() {
+      const tbody = document.getElementById('tablaMovimientos');
+      
+      if (movimientos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">
+              No hay movimientos registrados
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = movimientos.map(m => {
+        const tipoClase = m.tipo === 'ingreso' ? 'ok' : 'danger';
+        const tipoTexto = m.tipo === 'ingreso' ? 'Ingreso' : 'Egreso';
+        const signo = m.tipo === 'ingreso' ? '+' : '-';
+        
+        return `
+          <tr>
+            <td>${m.hora}</td>
+            <td><span class="badge ${tipoClase}">${tipoTexto}</span></td>
+            <td>${m.concepto}</td>
+            <td>${m.metodo}</td>
+            <td style="color:${m.tipo === 'ingreso' ? 'var(--ok)' : 'var(--danger)'}">${signo} S/ ${m.monto.toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      actualizarResumen();
+    }
+
+    // ============================================
+    // ACTUALIZAR RESUMEN
+    // ============================================
+    function actualizarResumen() {
+      const totalEfectivo = movimientos
+        .filter(m => m.tipo === 'ingreso' && m.metodo === 'Efectivo')
+        .reduce((sum, m) => sum + m.monto, 0);
+      
+      const totalDigital = movimientos
+        .filter(m => m.tipo === 'ingreso' && m.metodo !== 'Efectivo')
+        .reduce((sum, m) => sum + m.monto, 0);
+      
+      document.getElementById('montoAperturaDisplay').textContent = 'S/ ' + montoApertura.toFixed(2);
+      document.getElementById('ventasEfectivo').textContent = 'S/ ' + totalEfectivo.toFixed(2);
+      document.getElementById('ventasDigital').textContent = 'S/ ' + totalDigital.toFixed(2);
+    }
+
+    // ============================================
+    // AGREGAR MOVIMIENTO
+    // ============================================
+    function agregarMovimiento() {
+      document.getElementById('formMovimiento').reset();
+      document.getElementById('modalMovimiento').classList.add('open');
+    }
+
+    function cerrarModalMovimiento() {
+      document.getElementById('modalMovimiento').classList.remove('open');
+    }
+
+    function guardarMovimiento(event) {
+      event.preventDefault();
+      
+      const ahora = new Date();
+      const hora = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0');
+      
+      const nuevoMov = {
+        hora: hora,
+        tipo: document.getElementById('movTipo').value,
+        concepto: document.getElementById('movConcepto').value.trim(),
+        metodo: document.getElementById('movMetodo').value,
+        monto: parseFloat(document.getElementById('movMonto').value) || 0
+      };
+      
+      movimientos.push(nuevoMov);
+      cerrarModalMovimiento();
+      renderizarMovimientos();
+    }
+
+    // ============================================
+    // CERRAR CAJA
+    // ============================================
+    function cerrarCaja() {
+      const totalIngresos = movimientos
+        .filter(m => m.tipo === 'ingreso')
+        .reduce((sum, m) => sum + m.monto, 0);
+      
+      const totalEgresos = movimientos
+        .filter(m => m.tipo === 'egreso')
+        .reduce((sum, m) => sum + m.monto, 0);
+      
+      const saldoFinal = totalIngresos - totalEgresos;
+      
+      const confirmacion = confirm(
+        `🔒 Cerrar caja\n\n` +
+        `Monto de apertura: S/ ${montoApertura.toFixed(2)}\n` +
+        `Total ingresos: S/ ${totalIngresos.toFixed(2)}\n` +
+        `Total egresos: S/ ${totalEgresos.toFixed(2)}\n` +
+        `Saldo final: S/ ${saldoFinal.toFixed(2)}\n\n` +
+        `¿Confirmar cierre de caja?`
+      );
+      
+      if (confirmacion) {
+        alert(`✅ Caja cerrada exitosamente!\n\nSaldo final: S/ ${saldoFinal.toFixed(2)}`);
+        // Resetear movimientos
+        movimientos = [];
+        renderizarMovimientos();
+      }
+    }
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+      
+      // Obtener monto de apertura
+      const monto = sessionStorage.getItem('montoApertura');
+      if (monto) {
+        montoApertura = parseFloat(monto);
+      }
+      
+      renderizarMovimientos();
+    });
+  </script>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

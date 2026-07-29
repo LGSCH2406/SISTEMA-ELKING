@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Reportes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .rep-card .btn-sm {
+      width: 100%;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-interno"></div>
+
+    <div class="main-col">
+      <div id="topbar-interno"></div>
+
+      <div class="content">
+        <div class="content-head">
+          <div>
+            <h1>Reportes</h1>
+            <p>Genera y descarga los reportes del taller</p>
+          </div>
+        </div>
+
+        <div class="rep-grid">
+          <div class="rep-card">
+            <div class="icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:19px;height:19px;">
+                <circle cx="9" cy="20" r="1.4"/>
+                <circle cx="18" cy="20" r="1.4"/>
+                <path d="M2.5 3h2.5l2.6 12.4a2 2 0 002 1.6h8.6a2 2 0 002-1.6L21 7H6"/>
+              </svg>
+            </div>
+            <h3>Reporte de ventas</h3>
+            <p>Ventas por día, semana o mes con detalle de productos y métodos de pago.</p>
+            <button class="btn-sm outline" onclick="generarReporte('ventas')">Generar</button>
+          </div>
+
+          <div class="rep-card">
+            <div class="icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:19px;height:19px;">
+                <path d="M21 8l-9-5-9 5 9 5 9-5z"/>
+                <path d="M3 8v8l9 5 9-5V8"/>
+                <path d="M12 13v8"/>
+              </svg>
+            </div>
+            <h3>Reporte de inventario</h3>
+            <p>Stock actual, productos con stock bajo y valor total del inventario.</p>
+            <button class="btn-sm outline" onclick="generarReporte('inventario')">Generar</button>
+          </div>
+
+          <div class="rep-card">
+            <div class="icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:19px;height:19px;">
+                <rect x="2.5" y="6" width="19" height="12" rx="2"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <h3>Reporte de caja</h3>
+            <p>Aperturas, cierres, arqueos y movimientos del turno.</p>
+            <button class="btn-sm outline" onclick="generarReporte('caja')">Generar</button>
+          </div>
+
+          <div class="rep-card">
+            <div class="icon-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:19px;height:19px;">
+                <circle cx="9" cy="8" r="3.2"/>
+                <path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/>
+                <path d="M16 8.3a3.2 3.2 0 010 6.2"/>
+                <path d="M18.5 20c0-2.7-1.5-5-3.8-5.8"/>
+              </svg>
+            </div>
+            <h3>Reporte de usuarios</h3>
+            <p>Actividad por trabajador, roles y rendimiento.</p>
+            <button class="btn-sm outline" onclick="generarReporte('usuarios')">Generar</button>
+          </div>
+        </div>
+
+        <!-- Área de resultados del reporte -->
+        <div id="reporteResultado" style="margin-top:24px;display:none;">
+          <div class="card">
+            <div class="card-head">
+              <h3 id="reporteTitulo">Reporte generado</h3>
+              <button class="btn-sm outline" onclick="cerrarReporte()" style="padding:4px 12px;font-size:11px;">Cerrar</button>
+            </div>
+            <div class="card-body" id="reporteContenido" style="padding:18px;">
+              <!-- Contenido del reporte -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">Multiservicios El King · Panel interno de gestión</footer>
+    </div>
+  </div>
+
+  <div id="modal-formatos"></div>
+
+  <script>
+    // ============================================
+    // GENERAR REPORTE
+    // ============================================
+    function generarReporte(tipo) {
+      const areaResultado = document.getElementById('reporteResultado');
+      const titulo = document.getElementById('reporteTitulo');
+      const contenido = document.getElementById('reporteContenido');
+      
+      areaResultado.style.display = 'block';
+      
+      const fecha = new Date().toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const hora = new Date().toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      let html = '';
+      
+      switch(tipo) {
+        case 'ventas':
+          titulo.textContent = '📊 Reporte de Ventas';
+          html = `
+            <p><strong>Fecha:</strong> ${fecha} - ${hora}</p>
+            <p><strong>Período:</strong> Hoy</p>
+            <hr style="margin:12px 0;border-color:var(--border);">
+            <table>
+              <thead>
+                <tr><th># Orden</th><th>Productos</th><th>Total</th><th>Método</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>#0245</td><td>Aceite 10W-40 (x2), Filtro de aire (x1)</td><td>S/ 125.00</td><td>Efectivo</td></tr>
+                <tr><td>#0244</td><td>Kit de arrastre KTM (x1)</td><td>S/ 120.00</td><td>Tarjeta</td></tr>
+                <tr><td>#0243</td><td>Pastillas de freno (x2)</td><td>S/ 56.00</td><td>Yape</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3"><strong>Total ventas</strong></td><td><strong>S/ 301.00</strong></td></tr>
+              </tfoot>
+            </table>
+          `;
+          break;
+          
+        case 'inventario':
+          titulo.textContent = '📦 Reporte de Inventario';
+          html = `
+            <p><strong>Fecha:</strong> ${fecha} - ${hora}</p>
+            <p><strong>Total productos:</strong> 124</p>
+            <hr style="margin:12px 0;border-color:var(--border);">
+            <table>
+              <thead>
+                <tr><th>Categoría</th><th>Cantidad</th><th>Valor total</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Motor</td><td>32</td><td>S/ 1,280.00</td></tr>
+                <tr><td>Frenos</td><td>18</td><td>S/ 720.00</td></tr>
+                <tr><td>Transmisión</td><td>24</td><td>S/ 960.00</td></tr>
+                <tr><td>Eléctrico</td><td>15</td><td>S/ 600.00</td></tr>
+                <tr><td>Accesorios</td><td>35</td><td>S/ 1,400.00</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="2"><strong>Total inventario</strong></td><td><strong>S/ 4,960.00</strong></td></tr>
+              </tfoot>
+            </table>
+            <p style="margin-top:12px;color:var(--warn);">⚠️ 6 productos con stock bajo</p>
+          `;
+          break;
+          
+        case 'caja':
+          titulo.textContent = '💰 Reporte de Caja';
+          html = `
+            <p><strong>Fecha:</strong> ${fecha} - ${hora}</p>
+            <p><strong>Turno:</strong> Mañana</p>
+            <hr style="margin:12px 0;border-color:var(--border);">
+            <table>
+              <thead>
+                <tr><th>Concepto</th><th>Monto</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Apertura de caja</td><td>S/ 200.00</td></tr>
+                <tr><td>Ventas en efectivo</td><td>S/ 640.00</td></tr>
+                <tr><td>Ventas con tarjeta/Yape</td><td>S/ 380.00</td></tr>
+                <tr><td>Egresos</td><td style="color:var(--danger);">-S/ 25.00</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td><strong>Saldo final</strong></td><td><strong>S/ 1,195.00</strong></td></tr>
+              </tfoot>
+            </table>
+          `;
+          break;
+          
+        case 'usuarios':
+          titulo.textContent = '👥 Reporte de Usuarios';
+          html = `
+            <p><strong>Fecha:</strong> ${fecha} - ${hora}</p>
+            <p><strong>Total trabajadores:</strong> 5</p>
+            <hr style="margin:12px 0;border-color:var(--border);">
+            <table>
+              <thead>
+                <tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Ventas (hoy)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Jorge Ramírez</td><td>Administrador</td><td><span class="badge ok">Activo</span></td><td>3</td></tr>
+                <tr><td>Miguel Paredes</td><td>Vendedor</td><td><span class="badge ok">Activo</span></td><td>8</td></tr>
+                <tr><td>Lucía Campos</td><td>Cajero</td><td><span class="badge ok">Activo</span></td><td>0</td></tr>
+                <tr><td>Diego Soto</td><td>Almacenero</td><td><span class="badge warn">Invitación pendiente</span></td><td>0</td></tr>
+              </tbody>
+            </table>
+          `;
+          break;
+      }
+      
+      contenido.innerHTML = html;
+      areaResultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cerrarReporte() {
+      document.getElementById('reporteResultado').style.display = 'none';
+    }
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+    });
+  </script>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="crown-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z" stroke-linejoin="round"/>
+        </svg>
+        <div class="brand-name">MULTISERVICIOS<b>El King</b></div>
+      </div>
+      <div class="brand-tag">Mecánica &amp; Servicio de Motos</div>
+      <div class="brand-quote">Accede al portal del taller para gestionar ventas, almacén, pagos, reportes y usuarios.</div>
+    </div>
+
+    <div class="login-form-side">
+      <div class="login-box">
+        <button class="btn-back" onclick="window.location.href='inicio.html'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Volver al inicio
+        </button>
+
+        <h2>Bienvenido de nuevo</h2>
+        <p class="login-sub">Ingresa tus credenciales para acceder al panel del taller.</p>
+        
+        <div class="login-error" id="loginError">
+          ⚠️ Usuario o contraseña incorrectos. Intenta nuevamente.
+        </div>
+        
+        <div class="field">
+          <label>Usuario o correo</label>
+          <input type="text" id="username" placeholder="admin@elking.com" value="admin@elking.com">
+        </div>
+        
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" value="admin123">
+        </div>
+        
+        <div class="row-between">
+          <span class="check">
+            <input type="checkbox" id="rem">
+            <label for="rem" style="margin:0;text-transform:none;font-weight:400;color:var(--text-muted);">Recordarme</label>
+          </span>
+          <a href="#">¿Olvidaste tu contraseña?</a>
+        </div>
+        
+        <button class="btn-primary" onclick="handleLogin()">Iniciar sesión</button>
+        
+        <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted);">
+          ¿No tienes cuenta? <a href="#" style="color:var(--orange-dark);font-weight:600;">Contacta al administrador</a>
+        </p>
+        
+        <div class="login-credentials">
+          <p>
+            <b>Credenciales de prueba:</b><br>
+            Usuario: <code>admin@elking.com</code><br>
+            Contraseña: <code>admin123</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const users = {
+      'admin@elking.com': {
+        password: 'admin123',
+        name: 'Jorge Ramírez',
+        role: 'Administrador',
+        avatar: 'JR',
+        initials: 'JR'
+      },
+      'vendedor@elking.com': {
+        password: 'vendedor123',
+        name: 'Miguel Paredes',
+        role: 'Vendedor',
+        avatar: 'MP',
+        initials: 'MP'
+      },
+      'cajero@elking.com': {
+        password: 'cajero123',
+        name: 'Lucía Campos',
+        role: 'Cajero',
+        avatar: 'LC',
+        initials: 'LC'
+      }
+    };
+
+    function handleLogin() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorEl = document.getElementById('loginError');
+
+      if (!username || !password) {
+        errorEl.textContent = '⚠️ Por favor, completa todos los campos.';
+        errorEl.classList.add('show');
+        return;
+      }
+
+      const user = users[username];
+      
+      if (user && user.password === password) {
+        sessionStorage.setItem('user', JSON.stringify({
+          name: user.name,
+          role: user.role,
+          avatar: user.avatar,
+          initials: user.initials,
+          email: username
+        }));
+        window.location.href = '../app/apertura-caja.html';
+      } else {
+        errorEl.textContent = '⚠️ Usuario o contraseña incorrectos. Intenta nuevamente.';
+        errorEl.classList.add('show');
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleLogin();
+      });
+      document.getElementById('username').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') handleLogin();
+      });
+    });
+  </script>
+</body>
+</html>

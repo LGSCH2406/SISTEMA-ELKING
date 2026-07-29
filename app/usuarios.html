@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiservicios El King — Usuarios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-interno"></div>
+
+    <div class="main-col">
+      <div id="topbar-interno"></div>
+
+      <div class="content">
+        <div class="content-head">
+          <div>
+            <h1>Usuarios</h1>
+            <p>Trabajadores con acceso al sistema</p>
+          </div>
+          <button class="btn-sm" onclick="abrirModalUsuario()">
+            <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nuevo usuario
+          </button>
+        </div>
+
+        <!-- Perfil del usuario actual -->
+        <div class="profile-head" id="perfilUsuario">
+          <div class="avatar-lg" id="avatarPerfil">JR</div>
+          <div>
+            <h2 id="nombrePerfil">Jorge Ramírez</h2>
+            <div class="meta" id="emailPerfil">jorge.ramirez@elking.com · Taller Principal</div>
+            <div class="role-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:12px;height:12px;">
+                <path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z" stroke-linejoin="round"/>
+              </svg>
+              <span id="rolPerfil">Administrador</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Editar datos -->
+          <div class="card">
+            <div class="card-head"><h3>Editar datos</h3></div>
+            <div class="card-body" style="padding-top:16px;">
+              <form id="formEditarPerfil" onsubmit="guardarPerfil(event)">
+                <div class="form-grid">
+                  <div class="field">
+                    <label>Nombre completo</label>
+                    <input type="text" id="editNombre" value="Jorge Ramírez">
+                  </div>
+                  <div class="field">
+                    <label>Correo</label>
+                    <input type="email" id="editEmail" value="jorge.ramirez@elking.com">
+                  </div>
+                  <div class="field">
+                    <label>Teléfono</label>
+                    <input type="text" id="editTelefono" value="+51 987 654 321">
+                  </div>
+                  <div class="field">
+                    <label>Rol</label>
+                    <select id="editRol">
+                      <option value="Administrador" selected>Administrador</option>
+                      <option value="Vendedor">Vendedor</option>
+                      <option value="Almacenero">Almacenero</option>
+                      <option value="Cajero">Cajero</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" class="btn-sm" style="margin-top:6px;">Guardar cambios</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Equipo del taller -->
+          <div class="card">
+            <div class="card-head">
+              <h3>Equipo del taller</h3>
+              <a href="#" onclick="abrirModalUsuario()">Invitar</a>
+            </div>
+            <div class="card-body" style="padding-top:10px;" id="equipoContainer">
+              <!-- Usuarios cargados dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">Multiservicios El King · Panel interno de gestión</footer>
+    </div>
+  </div>
+
+  <div id="modal-formatos"></div>
+
+  <!-- Modal para agregar usuario -->
+  <div class="modal-overlay" id="modalUsuario" onclick="if(event.target===this) cerrarModalUsuario()">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-head">
+        <h3>Nuevo usuario</h3>
+        <button onclick="cerrarModalUsuario()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="formUsuario" onsubmit="guardarUsuario(event)">
+          <div class="field">
+            <label>Nombre completo</label>
+            <input type="text" id="userNombre" placeholder="Nombre completo" required>
+          </div>
+          <div class="field">
+            <label>Correo</label>
+            <input type="email" id="userEmail" placeholder="correo@elking.com" required>
+          </div>
+          <div class="field">
+            <label>Rol</label>
+            <select id="userRol" required>
+              <option value="Administrador">Administrador</option>
+              <option value="Vendedor">Vendedor</option>
+              <option value="Almacenero">Almacenero</option>
+              <option value="Cajero">Cajero</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Contraseña temporal</label>
+            <input type="text" id="userPassword" placeholder="Contraseña temporal" value="temp123" required>
+          </div>
+          <button type="submit" class="btn-primary">Crear usuario</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // DATOS DE USUARIOS
+    // ============================================
+    let usuarios = [
+      { nombre: 'Jorge Ramírez', email: 'jorge.ramirez@elking.com', rol: 'Administrador', telefono: '+51 987 654 321', estado: 'Activo', iniciales: 'JR' },
+      { nombre: 'Miguel Paredes', email: 'miguel.paredes@elking.com', rol: 'Vendedor', telefono: '+51 987 654 322', estado: 'Activo', iniciales: 'MP' },
+      { nombre: 'Lucía Campos', email: 'lucia.campos@elking.com', rol: 'Cajero', telefono: '+51 987 654 323', estado: 'Activo', iniciales: 'LC' },
+      { nombre: 'Diego Soto', email: 'diego.soto@elking.com', rol: 'Almacenero', telefono: '+51 987 654 324', estado: 'Invitación pendiente', iniciales: 'DS' }
+    ];
+
+    let usuarioActual = 0; // Índice del usuario logueado
+
+    // ============================================
+    // RENDERIZAR EQUIPO
+    // ============================================
+    function renderizarEquipo() {
+      const container = document.getElementById('equipoContainer');
+      
+      container.innerHTML = usuarios.map((u, index) => {
+        const estadoClase = u.estado === 'Activo' ? 'ok' : 'warn';
+        return `
+          <div class="team-row">
+            <div class="avatar-sm">${u.iniciales}</div>
+            <div class="info">
+              <div class="team-name">${u.nombre}</div>
+              <div class="team-role">${u.rol}</div>
+            </div>
+            <span class="badge ${estadoClase}">${u.estado}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // PERFIL DEL USUARIO ACTUAL
+    // ============================================
+    function cargarPerfil() {
+      const userData = sessionStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        document.getElementById('avatarPerfil').textContent = user.initials || 'U';
+        document.getElementById('nombrePerfil').textContent = user.name || 'Usuario';
+        document.getElementById('emailPerfil').textContent = user.email + ' · Taller Principal';
+        document.getElementById('rolPerfil').textContent = user.role || 'Usuario';
+        
+        // Prellenar formulario
+        document.getElementById('editNombre').value = user.name || '';
+        document.getElementById('editEmail').value = user.email || '';
+        document.getElementById('editRol').value = user.role || 'Administrador';
+      }
+    }
+
+    // ============================================
+    // GUARDAR PERFIL
+    // ============================================
+    function guardarPerfil(event) {
+      event.preventDefault();
+      const nombre = document.getElementById('editNombre').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      const telefono = document.getElementById('editTelefono').value.trim();
+      const rol = document.getElementById('editRol').value;
+      
+      // Actualizar sesión
+      const userData = sessionStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        user.name = nombre;
+        user.email = email;
+        user.role = rol;
+        sessionStorage.setItem('user', JSON.stringify(user));
+      }
+      
+      // Actualizar perfil mostrado
+      document.getElementById('nombrePerfil').textContent = nombre;
+      document.getElementById('emailPerfil').textContent = email + ' · Taller Principal';
+      document.getElementById('rolPerfil').textContent = rol;
+      
+      alert('✅ Perfil actualizado correctamente');
+    }
+
+    // ============================================
+    // CRUD DE USUARIOS
+    // ============================================
+    function abrirModalUsuario() {
+      document.getElementById('formUsuario').reset();
+      document.getElementById('modalUsuario').classList.add('open');
+    }
+
+    function cerrarModalUsuario() {
+      document.getElementById('modalUsuario').classList.remove('open');
+    }
+
+    function guardarUsuario(event) {
+      event.preventDefault();
+      
+      const nombre = document.getElementById('userNombre').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const rol = document.getElementById('userRol').value;
+      const password = document.getElementById('userPassword').value.trim();
+      
+      // Crear iniciales
+      const iniciales = nombre.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+      
+      usuarios.push({
+        nombre: nombre,
+        email: email,
+        rol: rol,
+        telefono: '',
+        estado: 'Invitación pendiente',
+        iniciales: iniciales
+      });
+      
+      cerrarModalUsuario();
+      renderizarEquipo();
+      alert(`✅ Usuario "${nombre}" creado correctamente\nContraseña temporal: ${password}`);
+    }
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+      
+      cargarPerfil();
+      renderizarEquipo();
+    });
+  </script>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>
