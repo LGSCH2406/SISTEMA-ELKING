@@ -162,11 +162,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
-  <!-- 🔥 TU CÓDIGO DE AUTENTICACIÓN -->
-  <script type="module">
-    import { iniciarSesion, registrarUsuario, auth } from "../js/auth.js";
+  <!-- 🔥 TU CÓDIGO DE AUTENTICACIÓN (Sin type="module") -->
+  <script src="../js/auth.js"></script>
 
+  <script>
     // ============================================================
     // ELEMENTOS DEL DOM
     // ============================================================

@@ -1,12 +1,31 @@
 // ============================================
-// CLASE: Controlador de Autenticación
-// PROPÓSITO: Login, Logout y gestión de sesión
+// CONFIGURACIÓN FIREBASE - MULTISERVICIOS EL KING
 // ============================================
 
-import { auth } from "./conexion.js";
+const firebaseConfig = {
+    apiKey: "AIzaSyBb5B66MeMC2BgUKaoFQ6hLbppKFzjn0IM",
+    authDomain: "multiservicios-elking.firebaseapp.com",
+    projectId: "multiservicios-elking",
+    storageBucket: "multiservicios-elking.firebasestorage.app",
+    messagingSenderId: "966238801484",
+    appId: "1:966238801484:web:5fba1938b141f36eee6ee9"
+};
 
-// 1. Función para iniciar sesión
-export async function iniciarSesion(email, password) {
+// Inicializar Firebase SOLO si no está inicializado ya
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log('✅ Firebase conectado (desde auth.js)');
+}
+
+// Crear la variable auth local a este archivo
+const auth = firebase.auth();
+
+// ============================================
+// CLASE: Controlador de Autenticación
+// ============================================
+
+// 1. Función para iniciar sesión (AHORA GLOBAL)
+window.iniciarSesion = async function(email, password) {
   try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const user = userCredential.user;
@@ -55,10 +74,10 @@ export async function iniciarSesion(email, password) {
     
     throw new Error(mensaje);
   }
-}
+};
 
-// 2. Función para registrar usuarios
-export async function registrarUsuario(email, password) {
+// 2. Función para registrar usuarios (AHORA GLOBAL)
+window.registrarUsuario = async function(email, password) {
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     console.log("✅ Usuario registrado:", userCredential.user.email);
@@ -67,9 +86,9 @@ export async function registrarUsuario(email, password) {
     console.error("❌ Error al registrar:", error.message);
     throw error;
   }
-}
+};
 
-// 3. Función global para cerrar sesión
+// 3. Función global para cerrar sesión (YA ERA GLOBAL)
 window.cerrarSesion = function() {
   auth.signOut().then(() => {
     sessionStorage.removeItem('user');
@@ -106,6 +125,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-// 5. 🔥 EXPORTAR auth PARA USO EN login.html
-export { auth };

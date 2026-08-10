@@ -4,7 +4,6 @@ console.log('🚀 app.js iniciado');
 
 // ============================================================
 // SECCIÓN ORIGINAL: FUNCIONES DE CARGA DE COMPONENTES
-// (NO MODIFICADO)
 // ============================================================
 
 // Función para cargar componentes HTML (CON ANTI-CACHÉ)
@@ -15,14 +14,7 @@ async function loadComponent(selector, filePath) {
     const url = filePath + cacheBuster;
     
     console.log(`📥 Cargando: ${url}`);
-    const response = await fetch(url, {
-      cache: 'no-store', // Forzar a no usar caché
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
+    const response = await fetch(url);
     
     console.log(`📊 Estado: ${response.status} ${response.statusText}`);
     
@@ -88,7 +80,6 @@ function highlightActiveLink() {
 
 // ============================================================
 // NUEVO: FUNCIONES DE AUTENTICACIÓN FIREBASE
-// (AGREGADO - NO MODIFICA NADA DE LO ANTERIOR)
 // ============================================================
 
 // Verificar sesión con Firebase
@@ -130,7 +121,6 @@ async function verificarSesionFirebase() {
 
 // ============================================================
 // SECCIÓN ORIGINAL: CARGA DE COMPONENTES SEGÚN PÁGINA
-// (MODIFICADO LIGERAMENTE PARA AGREGAR VERIFICACIÓN DE SESIÓN)
 // ============================================================
 
 // Cargar componentes según página
@@ -149,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   else if (pageType === 'interna') {
     console.log('🔄 Cargando componentes internos...');
     
-    // 🔥 NUEVO: Verificar autenticación antes de cargar
+    // 🔥 Verificar autenticación antes de cargar
     const userData = sessionStorage.getItem('user');
     if (!userData) {
       console.warn('⚠️ No hay sesión, redirigiendo al login...');
@@ -176,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   else if (pageType === 'login') {
     console.log('🔄 Página de login...');
     
-    // 🔥 NUEVO: Si ya hay sesión, redirigir a apertura de caja
+    // 🔥 Si ya hay sesión, redirigir a apertura de caja
     const tieneSesion = await verificarSesionFirebase();
     if (tieneSesion) {
       console.log('✅ Sesión detectada, redirigiendo...');
@@ -186,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   else if (pageType === 'caja') {
     console.log('🔄 Apertura de caja...');
     
-    // 🔥 NUEVO: Verificar autenticación
+    // 🔥 Verificar autenticación
     const userData = sessionStorage.getItem('user');
     if (!userData) {
       console.warn('⚠️ No hay sesión, redirigiendo al login...');
@@ -198,7 +188,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // ============================================================
 // SECCIÓN ORIGINAL: FUNCIONES GLOBALES
-// (NO MODIFICADO - TU BOTÓN DE CERRAR SESIÓN SIGUE AQUÍ)
 // ============================================================
 
 // Función global para modal de formatos
@@ -211,7 +200,7 @@ window.toggleFormatos = function(open) {
   }
 };
 
-// 🔥 MODIFICADO: Función global para cerrar sesión (ahora también cierra Firebase)
+// Función global para cerrar sesión (ahora también cierra Firebase)
 window.cerrarSesion = function() {
   // Cerrar sesión en Firebase si está disponible
   if (typeof firebase !== 'undefined') {
@@ -220,7 +209,7 @@ window.cerrarSesion = function() {
     });
   }
   
-  // Limpiar sessionStorage (TU CÓDIGO ORIGINAL)
+  // Limpiar sessionStorage
   sessionStorage.removeItem('user');
   sessionStorage.removeItem('montoApertura');
   
