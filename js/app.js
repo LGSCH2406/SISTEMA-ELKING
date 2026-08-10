@@ -2,6 +2,11 @@
 
 console.log('🚀 app.js iniciado');
 
+// ============================================================
+// SECCIÓN ORIGINAL: FUNCIONES DE CARGA DE COMPONENTES
+// (NO MODIFICADO)
+// ============================================================
+
 // Función para cargar componentes HTML (CON ANTI-CACHÉ)
 async function loadComponent(selector, filePath) {
   try {
@@ -81,18 +86,76 @@ function highlightActiveLink() {
   });
 }
 
+// ============================================================
+// NUEVO: FUNCIONES DE AUTENTICACIÓN FIREBASE
+// (AGREGADO - NO MODIFICA NADA DE LO ANTERIOR)
+// ============================================================
+
+// Verificar sesión con Firebase
+async function verificarSesionFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      console.warn('⚠️ Firebase no está disponible aún');
+      return false;
+    }
+    
+    return new Promise((resolve) => {
+      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+        unsubscribe();
+        if (user) {
+          console.log('👤 Sesión activa:', user.email);
+          
+          // Actualizar sessionStorage con datos de Firebase
+          const userData = {
+            email: user.email,
+            name: user.displayName || 'Usuario',
+            initials: user.displayName ? 
+              user.displayName.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2) : 'U',
+            role: 'Administrador',
+            uid: user.uid
+          };
+          sessionStorage.setItem('user', JSON.stringify(userData));
+          resolve(true);
+        } else {
+          console.log('🔒 No hay sesión activa');
+          resolve(false);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error verificando sesión:', error);
+    return false;
+  }
+}
+
+// ============================================================
+// SECCIÓN ORIGINAL: CARGA DE COMPONENTES SEGÚN PÁGINA
+// (MODIFICADO LIGERAMENTE PARA AGREGAR VERIFICACIÓN DE SESIÓN)
+// ============================================================
+
 // Cargar componentes según página
 document.addEventListener('DOMContentLoaded', async function() {
   const pageType = getPageType();
   console.log('📄 Tipo de página:', pageType);
 
+  // ===== PÁGINAS PÚBLICAS =====
   if (pageType === 'publica') {
     console.log('🔄 Cargando componentes públicos...');
     await loadComponent('#header-publico', '../components/header-publico.html');
     await loadComponent('#footer-publico', '../components/footer-publico.html');
   } 
+  
+  // ===== PÁGINAS INTERNAS =====
   else if (pageType === 'interna') {
     console.log('🔄 Cargando componentes internos...');
+    
+    // 🔥 NUEVO: Verificar autenticación antes de cargar
+    const userData = sessionStorage.getItem('user');
+    if (!userData) {
+      console.warn('⚠️ No hay sesión, redirigiendo al login...');
+      window.location.href = '../public/login.html';
+      return;
+    }
     
     // Cargar SIDEBAR
     const sidebarLoaded = await loadComponent('#sidebar-interno', '../components/sidebar-interno.html');
@@ -112,11 +175,31 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   else if (pageType === 'login') {
     console.log('🔄 Página de login...');
+    
+    // 🔥 NUEVO: Si ya hay sesión, redirigir a apertura de caja
+    const tieneSesion = await verificarSesionFirebase();
+    if (tieneSesion) {
+      console.log('✅ Sesión detectada, redirigiendo...');
+      window.location.href = '../app/apertura-caja.html';
+    }
   }
   else if (pageType === 'caja') {
     console.log('🔄 Apertura de caja...');
+    
+    // 🔥 NUEVO: Verificar autenticación
+    const userData = sessionStorage.getItem('user');
+    if (!userData) {
+      console.warn('⚠️ No hay sesión, redirigiendo al login...');
+      window.location.href = '../public/login.html';
+      return;
+    }
   }
 });
+
+// ============================================================
+// SECCIÓN ORIGINAL: FUNCIONES GLOBALES
+// (NO MODIFICADO - TU BOTÓN DE CERRAR SESIÓN SIGUE AQUÍ)
+// ============================================================
 
 // Función global para modal de formatos
 window.toggleFormatos = function(open) {
@@ -128,10 +211,21 @@ window.toggleFormatos = function(open) {
   }
 };
 
-// Función global para cerrar sesión
+// 🔥 MODIFICADO: Función global para cerrar sesión (ahora también cierra Firebase)
 window.cerrarSesion = function() {
+  // Cerrar sesión en Firebase si está disponible
+  if (typeof firebase !== 'undefined') {
+    firebase.auth().signOut().catch((error) => {
+      console.error('❌ Error al cerrar sesión en Firebase:', error);
+    });
+  }
+  
+  // Limpiar sessionStorage (TU CÓDIGO ORIGINAL)
   sessionStorage.removeItem('user');
   sessionStorage.removeItem('montoApertura');
+  
+  // Redirigir al login
+  window.location.href = '../public/login.html';
 };
 
 console.log('✅ Multiservicios El King - App cargada correctamente');

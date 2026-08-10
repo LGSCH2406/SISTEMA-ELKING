@@ -7,6 +7,85 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .login-error {
+      background: #FBE7DE;
+      color: var(--orange-dark);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      border-left: 4px solid var(--orange-dark);
+    }
+    .login-error.show {
+      display: block !important;
+    }
+    .login-success {
+      background: #E6F2EA;
+      color: var(--ok);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      border-left: 4px solid var(--ok);
+    }
+    .login-success.show {
+      display: block !important;
+    }
+    .btn-secondary {
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      padding: 13px 26px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(27, 28, 30, 0.3);
+    }
+    .btn-secondary:active { transform: translateY(0); }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <div class="login-wrap">
@@ -34,17 +113,20 @@
         <p class="login-sub">Ingresa tus credenciales para acceder al panel del taller.</p>
         
         <div class="login-error" id="loginError">
-          ⚠️ Usuario o contraseña incorrectos. Intenta nuevamente.
+          ⚠️ <span id="errorMessage">Usuario o contraseña incorrectos.</span>
+        </div>
+        <div class="login-success" id="loginSuccess">
+          ✅ <span id="successMessage">Usuario registrado exitosamente.</span>
         </div>
         
         <div class="field">
           <label>Usuario o correo</label>
-          <input type="text" id="username" placeholder="admin@elking.com" value="admin@elking.com">
+          <input type="text" id="username" placeholder="admin@elking.com" value="admin@elking.com" autocomplete="email">
         </div>
         
         <div class="field">
           <label>Contraseña</label>
-          <input type="password" id="password" placeholder="••••••••" value="admin123">
+          <input type="password" id="password" placeholder="••••••••" value="admin123" autocomplete="current-password">
         </div>
         
         <div class="row-between">
@@ -52,13 +134,17 @@
             <input type="checkbox" id="rem">
             <label for="rem" style="margin:0;text-transform:none;font-weight:400;color:var(--text-muted);">Recordarme</label>
           </span>
-          <a href="#">¿Olvidaste tu contraseña?</a>
+          <a href="#" id="forgotPasswordLink" style="cursor:pointer;">¿Olvidaste tu contraseña?</a>
         </div>
         
-        <button class="btn-primary" onclick="handleLogin()">Iniciar sesión</button>
+        <button class="btn-primary" id="loginBtn">Iniciar sesión</button>
+
+        <div class="divider">o</div>
+
+        <button class="btn-secondary" id="registerBtn">Crear cuenta nueva</button>
         
-        <p style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-muted);">
-          ¿No tienes cuenta? <a href="#" style="color:var(--orange-dark);font-weight:600;">Contacta al administrador</a>
+        <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted);">
+          ¿No tienes cuenta? <a href="#" id="showRegisterLink" style="color:var(--orange-dark);font-weight:600;cursor:pointer;">Regístrate aquí</a>
         </p>
         
         <div class="login-credentials">
@@ -72,69 +158,215 @@
     </div>
   </div>
 
-  <script>
-    const users = {
-      'admin@elking.com': {
-        password: 'admin123',
-        name: 'Jorge Ramírez',
-        role: 'Administrador',
-        avatar: 'JR',
-        initials: 'JR'
-      },
-      'vendedor@elking.com': {
-        password: 'vendedor123',
-        name: 'Miguel Paredes',
-        role: 'Vendedor',
-        avatar: 'MP',
-        initials: 'MP'
-      },
-      'cajero@elking.com': {
-        password: 'cajero123',
-        name: 'Lucía Campos',
-        role: 'Cajero',
-        avatar: 'LC',
-        initials: 'LC'
-      }
-    };
+  <!-- 🔥 FIREBASE SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorEl = document.getElementById('loginError');
+  <!-- 🔥 TU CÓDIGO DE AUTENTICACIÓN -->
+  <script type="module">
+    import { iniciarSesion, registrarUsuario, auth } from "../js/auth.js";
 
-      if (!username || !password) {
-        errorEl.textContent = '⚠️ Por favor, completa todos los campos.';
-        errorEl.classList.add('show');
-        return;
-      }
+    // ============================================================
+    // ELEMENTOS DEL DOM
+    // ============================================================
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const errorEl = document.getElementById('loginError');
+    const errorMsg = document.getElementById('errorMessage');
+    const successEl = document.getElementById('loginSuccess');
+    const successMsg = document.getElementById('successMessage');
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const showRegisterLink = document.getElementById('showRegisterLink');
 
-      const user = users[username];
-      
-      if (user && user.password === password) {
-        sessionStorage.setItem('user', JSON.stringify({
-          name: user.name,
-          role: user.role,
-          avatar: user.avatar,
-          initials: user.initials,
-          email: username
-        }));
-        window.location.href = '../app/apertura-caja.html';
+    // ============================================================
+    // FUNCIÓN: Mostrar/Ocultar mensajes
+    // ============================================================
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorEl.classList.add('show');
+      successEl.classList.remove('show');
+    }
+
+    function showSuccess(message) {
+      successMsg.textContent = message;
+      successEl.classList.add('show');
+      errorEl.classList.remove('show');
+    }
+
+    function hideMessages() {
+      errorEl.classList.remove('show');
+      successEl.classList.remove('show');
+    }
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loginBtn.disabled = true;
+        registerBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="loading-spinner"></span> Cargando...';
+        registerBtn.innerHTML = 'Cargando...';
       } else {
-        errorEl.textContent = '⚠️ Usuario o contraseña incorrectos. Intenta nuevamente.';
-        errorEl.classList.add('show');
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
+        loginBtn.disabled = false;
+        registerBtn.disabled = false;
+        loginBtn.innerHTML = 'Iniciar sesión';
+        registerBtn.innerHTML = 'Crear cuenta nueva';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleLogin();
-      });
-      document.getElementById('username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleLogin();
-      });
+    // ============================================================
+    // FUNCIÓN: LOGIN
+    // ============================================================
+    async function handleLogin() {
+      const email = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        showError('Por favor, completa todos los campos.');
+        return;
+      }
+
+      if (!email.includes('@') || !email.includes('.')) {
+        showError('Ingresa un correo electrónico válido.');
+        return;
+      }
+
+      hideMessages();
+      setLoading(true);
+
+      try {
+        await iniciarSesion(email, password);
+      } catch (error) {
+        showError(error.message || 'Error al iniciar sesión. Intenta nuevamente.');
+        passwordInput.value = '';
+        passwordInput.focus();
+        setLoading(false);
+      }
+    }
+
+    // ============================================================
+    // FUNCIÓN: REGISTRO
+    // ============================================================
+    async function handleRegister() {
+      const email = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        showError('Por favor, completa todos los campos.');
+        return;
+      }
+
+      if (!email.includes('@') || !email.includes('.')) {
+        showError('Ingresa un correo electrónico válido.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError('La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+
+      hideMessages();
+      setLoading(true);
+
+      try {
+        await registrarUsuario(email, password);
+        showSuccess('✅ Usuario registrado exitosamente. Ahora inicia sesión.');
+        passwordInput.value = '';
+        passwordInput.focus();
+        setLoading(false);
+      } catch (error) {
+        let mensaje = error.message;
+        if (error.code === 'auth/email-already-in-use') {
+          mensaje = '⚠️ Este correo ya está registrado. Intenta iniciar sesión.';
+        } else if (error.code === 'auth/weak-password') {
+          mensaje = '⚠️ La contraseña es muy débil. Usa al menos 6 caracteres.';
+        } else if (error.code === 'auth/invalid-email') {
+          mensaje = '⚠️ Correo electrónico inválido.';
+        }
+        showError(mensaje);
+        setLoading(false);
+      }
+    }
+
+    // ============================================================
+    // FUNCIÓN: RECUPERAR CONTRASEÑA
+    // ============================================================
+    async function handleForgotPassword() {
+      const email = usernameInput.value.trim();
+      
+      if (!email || !email.includes('@')) {
+        showError('Ingresa tu correo electrónico para recuperar la contraseña.');
+        usernameInput.focus();
+        return;
+      }
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showSuccess(`✅ Se envió un enlace de recuperación a ${email}`);
+      } catch (error) {
+        let mensaje = 'Error al enviar el correo de recuperación.';
+        if (error.code === 'auth/user-not-found') {
+          mensaje = '⚠️ No existe un usuario con este correo.';
+        }
+        showError(mensaje);
+      }
+    }
+
+    // ============================================================
+    // ASIGNAR FUNCIONES A LOS BOTONES
+    // ============================================================
+    loginBtn.addEventListener('click', handleLogin);
+    registerBtn.addEventListener('click', handleRegister);
+    forgotLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      handleForgotPassword();
     });
+    showRegisterLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      registerBtn.scrollIntoView({ behavior: 'smooth' });
+      registerBtn.focus();
+    });
+
+    // ============================================================
+    // ENTER PARA ENVIAR
+    // ============================================================
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement === usernameInput || activeElement === passwordInput) {
+          e.preventDefault();
+          handleLogin();
+        }
+      }
+    });
+
+    // ============================================================
+    // LIMPIAR MENSAJES AL ESCRIBIR
+    // ============================================================
+    usernameInput.addEventListener('input', hideMessages);
+    passwordInput.addEventListener('input', hideMessages);
+
+    // ============================================================
+    // REDIRECCIÓN SI YA HAY SESIÓN ACTIVA
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const userData = sessionStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user && user.email) {
+            console.log('👤 Sesión detectada en sessionStorage, redirigiendo...');
+            window.location.href = '../app/apertura-caja.html';
+          }
+        } catch (e) {
+          console.log('⚠️ Error al leer sessionStorage');
+        }
+      }
+    });
+
+    console.log('✅ Login cargado correctamente');
   </script>
 </body>
 </html>
