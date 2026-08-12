@@ -7,85 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
-  <style>
-    .login-error {
-      background: #FBE7DE;
-      color: var(--orange-dark);
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-      border-left: 4px solid var(--orange-dark);
-    }
-    .login-error.show {
-      display: block !important;
-    }
-    .login-success {
-      background: #E6F2EA;
-      color: var(--ok);
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-      border-left: 4px solid var(--ok);
-    }
-    .login-success.show {
-      display: block !important;
-    }
-    .btn-secondary {
-      background: var(--ink);
-      color: #fff;
-      border: none;
-      padding: 13px 26px;
-      border-radius: 9px;
-      font-size: 13.5px;
-      font-weight: 700;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.2s ease;
-      width: 100%;
-      margin-top: 8px;
-    }
-    .btn-secondary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(27, 28, 30, 0.3);
-    }
-    .btn-secondary:active { transform: translateY(0); }
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 16px 0;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 0.6s linear infinite;
-      margin-right: 8px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .btn-primary:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-  </style>
 </head>
 <body>
   <div class="login-wrap">
@@ -112,11 +33,8 @@
         <h2>Bienvenido de nuevo</h2>
         <p class="login-sub">Ingresa tus credenciales para acceder al panel del taller.</p>
         
-        <div class="login-error" id="loginError">
+        <div class="login-error" id="loginError" style="display:none;">
           ⚠️ <span id="errorMessage">Usuario o contraseña incorrectos.</span>
-        </div>
-        <div class="login-success" id="loginSuccess">
-          ✅ <span id="successMessage">Usuario registrado exitosamente.</span>
         </div>
         
         <div class="field">
@@ -138,10 +56,6 @@
         </div>
         
         <button class="btn-primary" id="loginBtn">Iniciar sesión</button>
-
-        <div class="divider">o</div>
-
-        <button class="btn-secondary" id="registerBtn">Crear cuenta nueva</button>
         
         <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted);">
           ¿No tienes cuenta? <a href="#" id="showRegisterLink" style="color:var(--orange-dark);font-weight:600;cursor:pointer;">Regístrate aquí</a>
@@ -162,139 +76,90 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
-  <!-- 🔥 TU CÓDIGO DE AUTENTICACIÓN (Sin type="module") -->
+  <!-- 🔥 CONEXIÓN PRIMERO -->
+  <script src="../js/conexion.js"></script>
+  
+  <!-- 🔥 AUTH DESPUÉS -->
   <script src="../js/auth.js"></script>
 
   <script>
-    // ============================================================
+    // ============================================
     // ELEMENTOS DEL DOM
-    // ============================================================
+    // ============================================
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
     const errorEl = document.getElementById('loginError');
     const errorMsg = document.getElementById('errorMessage');
-    const successEl = document.getElementById('loginSuccess');
-    const successMsg = document.getElementById('successMessage');
-    const forgotLink = document.getElementById('forgotPasswordLink');
-    const showRegisterLink = document.getElementById('showRegisterLink');
 
-    // ============================================================
-    // FUNCIÓN: Mostrar/Ocultar mensajes
-    // ============================================================
     function showError(message) {
       errorMsg.textContent = message;
-      errorEl.classList.add('show');
-      successEl.classList.remove('show');
+      errorEl.style.display = 'block';
     }
 
-    function showSuccess(message) {
-      successMsg.textContent = message;
-      successEl.classList.add('show');
-      errorEl.classList.remove('show');
+    function hideError() {
+      errorEl.style.display = 'none';
     }
 
-    function hideMessages() {
-      errorEl.classList.remove('show');
-      successEl.classList.remove('show');
-    }
-
-    function setLoading(isLoading) {
-      if (isLoading) {
-        loginBtn.disabled = true;
-        registerBtn.disabled = true;
-        loginBtn.innerHTML = '<span class="loading-spinner"></span> Cargando...';
-        registerBtn.innerHTML = 'Cargando...';
-      } else {
-        loginBtn.disabled = false;
-        registerBtn.disabled = false;
-        loginBtn.innerHTML = 'Iniciar sesión';
-        registerBtn.innerHTML = 'Crear cuenta nueva';
-      }
-    }
-
-    // ============================================================
+    // ============================================
     // FUNCIÓN: LOGIN
-    // ============================================================
+    // ============================================
     async function handleLogin() {
       const email = usernameInput.value.trim();
       const password = passwordInput.value.trim();
 
+      hideError();
+
       if (!email || !password) {
         showError('Por favor, completa todos los campos.');
         return;
       }
 
-      if (!email.includes('@') || !email.includes('.')) {
+      if (!email.includes('@')) {
         showError('Ingresa un correo electrónico válido.');
         return;
       }
 
-      hideMessages();
-      setLoading(true);
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Cargando...';
 
       try {
-        await iniciarSesion(email, password);
+        // Usar la función global de auth.js
+        await window.iniciarSesion(email, password);
+        // Si llega aquí, la redirección se maneja en iniciarSesion
       } catch (error) {
-        showError(error.message || 'Error al iniciar sesión. Intenta nuevamente.');
+        showError(error.message || 'Error al iniciar sesión.');
         passwordInput.value = '';
         passwordInput.focus();
-        setLoading(false);
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Iniciar sesión';
       }
     }
 
-    // ============================================================
-    // FUNCIÓN: REGISTRO
-    // ============================================================
-    async function handleRegister() {
-      const email = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
+    // ============================================
+    // EVENTOS
+    // ============================================
+    loginBtn.addEventListener('click', handleLogin);
 
-      if (!email || !password) {
-        showError('Por favor, completa todos los campos.');
-        return;
-      }
-
-      if (!email.includes('@') || !email.includes('.')) {
-        showError('Ingresa un correo electrónico válido.');
-        return;
-      }
-
-      if (password.length < 6) {
-        showError('La contraseña debe tener al menos 6 caracteres.');
-        return;
-      }
-
-      hideMessages();
-      setLoading(true);
-
-      try {
-        await registrarUsuario(email, password);
-        showSuccess('✅ Usuario registrado exitosamente. Ahora inicia sesión.');
-        passwordInput.value = '';
-        passwordInput.focus();
-        setLoading(false);
-      } catch (error) {
-        let mensaje = error.message;
-        if (error.code === 'auth/email-already-in-use') {
-          mensaje = '⚠️ Este correo ya está registrado. Intenta iniciar sesión.';
-        } else if (error.code === 'auth/weak-password') {
-          mensaje = '⚠️ La contraseña es muy débil. Usa al menos 6 caracteres.';
-        } else if (error.code === 'auth/invalid-email') {
-          mensaje = '⚠️ Correo electrónico inválido.';
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const active = document.activeElement;
+        if (active === usernameInput || active === passwordInput) {
+          e.preventDefault();
+          handleLogin();
         }
-        showError(mensaje);
-        setLoading(false);
       }
-    }
+    });
 
-    // ============================================================
-    // FUNCIÓN: RECUPERAR CONTRASEÑA
-    // ============================================================
-    async function handleForgotPassword() {
+    usernameInput.addEventListener('input', hideError);
+    passwordInput.addEventListener('input', hideError);
+
+    // ============================================
+    // RECUPERAR CONTRASEÑA
+    // ============================================
+    document.getElementById('forgotPasswordLink').addEventListener('click', async function(e) {
+      e.preventDefault();
       const email = usernameInput.value.trim();
       
       if (!email || !email.includes('@')) {
@@ -304,8 +169,8 @@
       }
 
       try {
-        await auth.sendPasswordResetEmail(email);
-        showSuccess(`✅ Se envió un enlace de recuperación a ${email}`);
+        await firebase.auth().sendPasswordResetEmail(email);
+        alert(`✅ Se envió un enlace de recuperación a ${email}`);
       } catch (error) {
         let mensaje = 'Error al enviar el correo de recuperación.';
         if (error.code === 'auth/user-not-found') {
@@ -313,52 +178,49 @@
         }
         showError(mensaje);
       }
-    }
-
-    // ============================================================
-    // ASIGNAR FUNCIONES A LOS BOTONES
-    // ============================================================
-    loginBtn.addEventListener('click', handleLogin);
-    registerBtn.addEventListener('click', handleRegister);
-    forgotLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      handleForgotPassword();
-    });
-    showRegisterLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      registerBtn.scrollIntoView({ behavior: 'smooth' });
-      registerBtn.focus();
     });
 
-    // ============================================================
-    // ENTER PARA ENVIAR
-    // ============================================================
-    document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        const activeElement = document.activeElement;
-        if (activeElement === usernameInput || activeElement === passwordInput) {
-          e.preventDefault();
-          handleLogin();
-        }
+    // ============================================
+    // REGISTRO RÁPIDO
+    // ============================================
+    document.getElementById('showRegisterLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const email = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      
+      if (!email || !password || password.length < 6) {
+        showError('Ingresa un correo y contraseña válida (mínimo 6 caracteres).');
+        return;
       }
+
+      if (!confirm(`¿Registrar usuario "${email}" con la contraseña actual?`)) return;
+
+      window.registrarUsuario(email, password)
+        .then(function() {
+          alert('✅ Usuario registrado exitosamente. Ahora inicia sesión.');
+          passwordInput.value = '';
+          passwordInput.focus();
+        })
+        .catch(function(error) {
+          let mensaje = error.message;
+          if (error.code === 'auth/email-already-in-use') {
+            mensaje = '⚠️ Este correo ya está registrado.';
+          }
+          showError(mensaje);
+        });
     });
 
-    // ============================================================
-    // LIMPIAR MENSAJES AL ESCRIBIR
-    // ============================================================
-    usernameInput.addEventListener('input', hideMessages);
-    passwordInput.addEventListener('input', hideMessages);
-
-    // ============================================================
-    // REDIRECCIÓN SI YA HAY SESIÓN ACTIVA
-    // ============================================================
+    // ============================================
+    // REDIRECCIÓN SI YA HAY SESIÓN
+    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
       const userData = sessionStorage.getItem('user');
       if (userData) {
         try {
           const user = JSON.parse(userData);
           if (user && user.email) {
-            console.log('👤 Sesión detectada en sessionStorage, redirigiendo...');
+            console.log('👤 Sesión detectada, redirigiendo...');
             window.location.href = '../app/apertura-caja.html';
           }
         } catch (e) {

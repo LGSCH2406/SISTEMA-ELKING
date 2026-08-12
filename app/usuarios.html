@@ -19,7 +19,7 @@
         <div class="content-head">
           <div>
             <h1>Usuarios</h1>
-            <p>Trabajadores con acceso al sistema</p>
+            <p id="resumenUsuarios">Trabajadores con acceso al sistema</p>
           </div>
           <button class="btn-sm" onclick="abrirModalUsuario()">
             <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -29,23 +29,21 @@
           </button>
         </div>
 
-        <!-- Perfil del usuario actual -->
         <div class="profile-head" id="perfilUsuario">
-          <div class="avatar-lg" id="avatarPerfil">JR</div>
+          <div class="avatar-lg" id="avatarPerfil">U</div>
           <div>
-            <h2 id="nombrePerfil">Jorge Ramírez</h2>
-            <div class="meta" id="emailPerfil">jorge.ramirez@elking.com · Taller Principal</div>
-            <div class="role-badge">
+            <h2 id="nombrePerfil">Cargando...</h2>
+            <div class="meta" id="emailPerfil">Cargando...</div>
+            <div class="role-badge" id="rolBadge">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:12px;height:12px;">
                 <path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z" stroke-linejoin="round"/>
               </svg>
-              <span id="rolPerfil">Administrador</span>
+              <span id="rolPerfil">Cargando...</span>
             </div>
           </div>
         </div>
 
         <div class="grid-2">
-          <!-- Editar datos -->
           <div class="card">
             <div class="card-head"><h3>Editar datos</h3></div>
             <div class="card-body" style="padding-top:16px;">
@@ -53,20 +51,20 @@
                 <div class="form-grid">
                   <div class="field">
                     <label>Nombre completo</label>
-                    <input type="text" id="editNombre" value="Jorge Ramírez">
+                    <input type="text" id="editNombre" required>
                   </div>
                   <div class="field">
                     <label>Correo</label>
-                    <input type="email" id="editEmail" value="jorge.ramirez@elking.com">
+                    <input type="email" id="editEmail" required>
                   </div>
                   <div class="field">
                     <label>Teléfono</label>
-                    <input type="text" id="editTelefono" value="+51 987 654 321">
+                    <input type="text" id="editTelefono">
                   </div>
                   <div class="field">
                     <label>Rol</label>
                     <select id="editRol">
-                      <option value="Administrador" selected>Administrador</option>
+                      <option value="Administrador">Administrador</option>
                       <option value="Vendedor">Vendedor</option>
                       <option value="Almacenero">Almacenero</option>
                       <option value="Cajero">Cajero</option>
@@ -78,14 +76,13 @@
             </div>
           </div>
 
-          <!-- Equipo del taller -->
           <div class="card">
             <div class="card-head">
               <h3>Equipo del taller</h3>
               <a href="#" onclick="abrirModalUsuario()">Invitar</a>
             </div>
             <div class="card-body" style="padding-top:10px;" id="equipoContainer">
-              <!-- Usuarios cargados dinámicamente -->
+              <div style="text-align:center;padding:20px;color:var(--text-muted);">Cargando usuarios...</div>
             </div>
           </div>
         </div>
@@ -97,7 +94,6 @@
 
   <div id="modal-formatos"></div>
 
-  <!-- Modal para agregar usuario -->
   <div class="modal-overlay" id="modalUsuario" onclick="if(event.target===this) cerrarModalUsuario()">
     <div class="modal-box" style="max-width:420px;">
       <div class="modal-head">
@@ -107,15 +103,19 @@
       <div class="modal-body">
         <form id="formUsuario" onsubmit="guardarUsuario(event)">
           <div class="field">
-            <label>Nombre completo</label>
+            <label>Nombre completo *</label>
             <input type="text" id="userNombre" placeholder="Nombre completo" required>
           </div>
           <div class="field">
-            <label>Correo</label>
+            <label>Correo *</label>
             <input type="email" id="userEmail" placeholder="correo@elking.com" required>
           </div>
           <div class="field">
-            <label>Rol</label>
+            <label>Teléfono</label>
+            <input type="text" id="userTelefono" placeholder="+51 987 654 321">
+          </div>
+          <div class="field">
+            <label>Rol *</label>
             <select id="userRol" required>
               <option value="Administrador">Administrador</option>
               <option value="Vendedor">Vendedor</option>
@@ -124,8 +124,8 @@
             </select>
           </div>
           <div class="field">
-            <label>Contraseña temporal</label>
-            <input type="text" id="userPassword" placeholder="Contraseña temporal" value="temp123" required>
+            <label>Contraseña temporal *</label>
+            <input type="text" id="userPassword" placeholder="Mínimo 6 caracteres" value="123456" required minlength="6">
           </div>
           <button type="submit" class="btn-primary">Crear usuario</button>
         </form>
@@ -133,18 +133,131 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="../js/conexion.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/app.js"></script>
+
   <script>
     // ============================================
-    // DATOS DE USUARIOS
+    // VARIABLES GLOBALES
     // ============================================
-    let usuarios = [
-      { nombre: 'Jorge Ramírez', email: 'jorge.ramirez@elking.com', rol: 'Administrador', telefono: '+51 987 654 321', estado: 'Activo', iniciales: 'JR' },
-      { nombre: 'Miguel Paredes', email: 'miguel.paredes@elking.com', rol: 'Vendedor', telefono: '+51 987 654 322', estado: 'Activo', iniciales: 'MP' },
-      { nombre: 'Lucía Campos', email: 'lucia.campos@elking.com', rol: 'Cajero', telefono: '+51 987 654 323', estado: 'Activo', iniciales: 'LC' },
-      { nombre: 'Diego Soto', email: 'diego.soto@elking.com', rol: 'Almacenero', telefono: '+51 987 654 324', estado: 'Invitación pendiente', iniciales: 'DS' }
-    ];
+    let usuarioActual = null;
+    let usuariosLista = [];
+    let esAdmin = false;
+    let usuarioUid = null;
 
-    let usuarioActual = 0; // Índice del usuario logueado
+    // ============================================
+    // CARGAR PERFIL DEL USUARIO ACTUAL
+    // ============================================
+    function cargarPerfil() {
+      const userData = sessionStorage.getItem('user');
+      if (!userData) {
+        window.location.href = '../public/login.html';
+        return;
+      }
+
+      const user = JSON.parse(userData);
+      usuarioActual = user;
+      esAdmin = user.role === 'Administrador';
+
+      console.log('👤 Usuario actual:', user);
+      console.log('🛡️ Es Administrador:', esAdmin);
+
+      database.ref('usuarios').orderByChild('email').equalTo(user.email).once('value')
+        .then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const key = Object.keys(data)[0];
+            const userFromDB = data[key];
+            usuarioUid = key;
+
+            const updatedUser = {
+              email: userFromDB.email,
+              name: userFromDB.nombre || 'Usuario',
+              role: userFromDB.rol || 'Usuario',
+              telefono: userFromDB.telefono || '',
+              initials: userFromDB.nombre ? 
+                userFromDB.nombre.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2) : 'U',
+              uid: userFromDB.uid,
+              estado: userFromDB.estado || 'Activo'
+            };
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+            usuarioActual = updatedUser;
+            esAdmin = updatedUser.role === 'Administrador';
+
+            mostrarPerfil(updatedUser);
+          }
+        })
+        .catch((error) => {
+          console.error('Error cargando perfil:', error);
+          mostrarPerfil(user);
+        });
+
+      cargarUsuarios();
+    }
+
+    // ============================================
+    // MOSTRAR PERFIL
+    // ============================================
+    function mostrarPerfil(user) {
+      document.getElementById('avatarPerfil').textContent = user.initials || 'U';
+      document.getElementById('nombrePerfil').textContent = user.name || 'Usuario';
+      document.getElementById('emailPerfil').textContent = (user.email || '') + ' · Taller Principal';
+      document.getElementById('rolPerfil').textContent = user.role || 'Usuario';
+      
+      document.getElementById('editNombre').value = user.name || '';
+      document.getElementById('editEmail').value = user.email || '';
+      document.getElementById('editTelefono').value = user.telefono || '';
+      document.getElementById('editRol').value = user.role || 'Administrador';
+
+      if (!esAdmin) {
+        document.getElementById('editRol').disabled = true;
+        document.getElementById('editRol').title = 'Solo los Administradores pueden cambiar el rol';
+        const form = document.getElementById('formEditarPerfil');
+        if (!document.getElementById('notaNoAdmin')) {
+          const nota = document.createElement('p');
+          nota.id = 'notaNoAdmin';
+          nota.style.cssText = 'font-size:11px;color:var(--text-muted);margin:8px 0 0;';
+          nota.textContent = 'ℹ️ Solo los Administradores pueden cambiar roles. Contacta al administrador.';
+          form.appendChild(nota);
+        }
+      } else {
+        document.getElementById('editRol').disabled = false;
+        const nota = document.getElementById('notaNoAdmin');
+        if (nota) nota.remove();
+      }
+    }
+
+    // ============================================
+    // CARGAR USUARIOS
+    // ============================================
+    function cargarUsuarios() {
+      const container = document.getElementById('equipoContainer');
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Cargando usuarios...</div>';
+
+      database.ref('usuarios').once('value')
+        .then((snapshot) => {
+          const data = snapshot.val();
+          usuariosLista = [];
+          
+          if (data) {
+            Object.keys(data).forEach((key) => {
+              usuariosLista.push({ key: key, ...data[key] });
+            });
+          }
+          
+          renderizarEquipo();
+          actualizarResumen();
+        })
+        .catch((error) => {
+          console.error('Error cargando usuarios:', error);
+          container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);">Error al cargar usuarios</div>';
+        });
+    }
 
     // ============================================
     // RENDERIZAR EQUIPO
@@ -152,130 +265,274 @@
     function renderizarEquipo() {
       const container = document.getElementById('equipoContainer');
       
-      container.innerHTML = usuarios.map((u, index) => {
+      let usuariosAMostrar = usuariosLista;
+      if (!esAdmin) {
+        usuariosAMostrar = usuariosLista.filter(u => u.email === usuarioActual.email);
+      }
+      
+      if (usuariosAMostrar.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">No hay usuarios registrados</div>';
+        return;
+      }
+
+      container.innerHTML = usuariosAMostrar.map((u) => {
         const estadoClase = u.estado === 'Activo' ? 'ok' : 'warn';
+        const iniciales = u.nombre ? u.nombre.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2) : 'U';
+        const esMiPerfil = u.email === usuarioActual.email;
+        
         return `
-          <div class="team-row">
-            <div class="avatar-sm">${u.iniciales}</div>
+          <div class="team-row" style="${esMiPerfil ? 'background:var(--paper);border-radius:8px;padding:12px;' : ''}">
+            <div class="avatar-sm">${iniciales}</div>
             <div class="info">
-              <div class="team-name">${u.nombre}</div>
-              <div class="team-role">${u.rol}</div>
+              <div class="team-name">${u.nombre || 'Sin nombre'} ${esMiPerfil ? '⭐' : ''}</div>
+              <div class="team-role">${u.rol || 'Sin rol'}</div>
             </div>
-            <span class="badge ${estadoClase}">${u.estado}</span>
+            <span class="badge ${estadoClase}">${u.estado || 'Invitación pendiente'}</span>
+            ${esAdmin && u.email !== usuarioActual.email ? `<button onclick="editarUsuario('${u.uid}')" style="background:transparent;border:none;color:var(--orange-dark);cursor:pointer;font-size:12px;">✏️</button>` : ''}
           </div>
         `;
       }).join('');
     }
 
     // ============================================
-    // PERFIL DEL USUARIO ACTUAL
+    // ACTUALIZAR RESUMEN
     // ============================================
-    function cargarPerfil() {
-      const userData = sessionStorage.getItem('user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        document.getElementById('avatarPerfil').textContent = user.initials || 'U';
-        document.getElementById('nombrePerfil').textContent = user.name || 'Usuario';
-        document.getElementById('emailPerfil').textContent = user.email + ' · Taller Principal';
-        document.getElementById('rolPerfil').textContent = user.role || 'Usuario';
-        
-        // Prellenar formulario
-        document.getElementById('editNombre').value = user.name || '';
-        document.getElementById('editEmail').value = user.email || '';
-        document.getElementById('editRol').value = user.role || 'Administrador';
-      }
+    function actualizarResumen() {
+      const total = usuariosLista.length;
+      const activos = usuariosLista.filter(u => u.estado === 'Activo').length;
+      document.getElementById('resumenUsuarios').textContent = 
+        `${total} trabajadores · ${activos} activos`;
     }
 
     // ============================================
     // GUARDAR PERFIL
     // ============================================
-    function guardarPerfil(event) {
+    async function guardarPerfil(event) {
       event.preventDefault();
+      
       const nombre = document.getElementById('editNombre').value.trim();
       const email = document.getElementById('editEmail').value.trim();
       const telefono = document.getElementById('editTelefono').value.trim();
       const rol = document.getElementById('editRol').value;
-      
-      // Actualizar sesión
-      const userData = sessionStorage.getItem('user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        user.name = nombre;
-        user.email = email;
-        user.role = rol;
-        sessionStorage.setItem('user', JSON.stringify(user));
+
+      if (!nombre || !email) {
+        alert('⚠️ Nombre y correo son obligatorios.');
+        return;
       }
-      
-      // Actualizar perfil mostrado
-      document.getElementById('nombrePerfil').textContent = nombre;
-      document.getElementById('emailPerfil').textContent = email + ' · Taller Principal';
-      document.getElementById('rolPerfil').textContent = rol;
-      
-      alert('✅ Perfil actualizado correctamente');
+
+      if (!esAdmin) {
+        const rolActual = document.getElementById('editRol').value;
+        if (rolActual !== usuarioActual.role) {
+          alert('⚠️ Solo los Administradores pueden cambiar el rol.');
+          document.getElementById('editRol').value = usuarioActual.role;
+          return;
+        }
+      }
+
+      try {
+        const userData = sessionStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          const snapshot = await database.ref('usuarios').orderByChild('email').equalTo(user.email).once('value');
+          const data = snapshot.val();
+          
+          if (data) {
+            const key = Object.keys(data)[0];
+            await database.ref('usuarios').child(key).update({
+              nombre: nombre,
+              email: email,
+              telefono: telefono,
+              rol: rol
+            });
+          }
+        }
+
+        const updatedUser = {
+          ...usuarioActual,
+          name: nombre,
+          email: email,
+          telefono: telefono,
+          role: rol,
+          initials: nombre.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
+        };
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        usuarioActual = updatedUser;
+        esAdmin = updatedUser.role === 'Administrador';
+
+        document.getElementById('nombrePerfil').textContent = nombre;
+        document.getElementById('emailPerfil').textContent = email + ' · Taller Principal';
+        document.getElementById('rolPerfil').textContent = rol;
+        document.getElementById('avatarPerfil').textContent = updatedUser.initials;
+
+        alert('✅ Perfil actualizado correctamente');
+        
+        cargarUsuarios();
+        window.location.reload();
+        
+      } catch (error) {
+        console.error('Error al guardar perfil:', error);
+        alert('❌ Error al guardar: ' + error.message);
+      }
     }
 
     // ============================================
-    // CRUD DE USUARIOS
+    // EDITAR OTRO USUARIO (SOLO ADMIN)
+    // ============================================
+    function editarUsuario(uid) {
+      const usuario = usuariosLista.find(u => u.uid === uid);
+      if (!usuario) return;
+
+      document.getElementById('editNombre').value = usuario.nombre || '';
+      document.getElementById('editEmail').value = usuario.email || '';
+      document.getElementById('editTelefono').value = usuario.telefono || '';
+      document.getElementById('editRol').value = usuario.rol || 'Administrador';
+
+      document.getElementById('editRol').dataset.editUid = uid;
+      document.getElementById('editRol').dataset.editEmail = usuario.email;
+
+      const form = document.getElementById('formEditarPerfil');
+      let indicador = document.getElementById('indicadorEdicion');
+      if (!indicador) {
+        indicador = document.createElement('p');
+        indicador.id = 'indicadorEdicion';
+        indicador.style.cssText = 'font-size:12px;color:var(--orange-dark);font-weight:600;margin:0 0 12px;';
+        form.prepend(indicador);
+      }
+      indicador.textContent = `✏️ Editando usuario: ${usuario.nombre}`;
+
+      const btn = form.querySelector('button[type="submit"]');
+      btn.textContent = 'Actualizar usuario';
+
+      let ayuda = document.getElementById('ayudaEdicion');
+      if (!ayuda) {
+        ayuda = document.createElement('p');
+        ayuda.id = 'ayudaEdicion';
+        ayuda.style.cssText = 'font-size:11px;color:var(--text-muted);margin:4px 0 0;';
+        form.appendChild(ayuda);
+      }
+      ayuda.textContent = 'ℹ️ Estás editando los datos de otro usuario. Los cambios se guardarán en su perfil.';
+    }
+
+    // ============================================
+    // CREAR NUEVO USUARIO
+    // ============================================
+    async function guardarUsuario(event) {
+      event.preventDefault();
+      
+      const nombre = document.getElementById('userNombre').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const telefono = document.getElementById('userTelefono').value.trim();
+      const rol = document.getElementById('userRol').value;
+      const password = document.getElementById('userPassword').value.trim();
+
+      if (!nombre || !email || !password) {
+        alert('⚠️ Completa todos los campos obligatorios.');
+        return;
+      }
+
+      if (password.length < 6) {
+        alert('⚠️ La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+
+      try {
+        const snapshot = await database.ref('usuarios').orderByChild('email').equalTo(email).once('value');
+        if (snapshot.val()) {
+          alert('⚠️ Ya existe un usuario con este correo.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error verificando usuario:', error);
+      }
+
+      const submitBtn = document.querySelector('#formUsuario .btn-primary');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Creando...';
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const firebaseUser = userCredential.user;
+
+        const userData = {
+          nombre: nombre,
+          email: email,
+          telefono: telefono || '',
+          rol: rol,
+          estado: 'Activo',
+          uid: firebaseUser.uid,
+          createdAt: firebaseUser.metadata.creationTime || new Date().toISOString()
+        };
+
+        await database.ref('usuarios').child(firebaseUser.uid).set(userData);
+
+        alert(`✅ Usuario "${nombre}" creado exitosamente!\n\nEmail: ${email}\nContraseña: ${password}\nRol: ${rol}`);
+
+        document.getElementById('formUsuario').reset();
+        cerrarModalUsuario();
+        cargarUsuarios();
+
+      } catch (error) {
+        console.error('Error al crear usuario:', error);
+        
+        let mensaje = error.message;
+        if (error.code === 'auth/email-already-in-use') {
+          mensaje = '⚠️ Este correo ya está registrado en Firebase Authentication.';
+        } else if (error.code === 'auth/weak-password') {
+          mensaje = '⚠️ La contraseña es muy débil. Usa al menos 6 caracteres.';
+        } else if (error.code === 'auth/invalid-email') {
+          mensaje = '⚠️ Correo electrónico inválido.';
+        }
+        alert('❌ Error: ' + mensaje);
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Crear usuario';
+    }
+
+    // ============================================
+    // MODAL
     // ============================================
     function abrirModalUsuario() {
       document.getElementById('formUsuario').reset();
+      document.getElementById('userPassword').value = '123456';
       document.getElementById('modalUsuario').classList.add('open');
     }
 
     function cerrarModalUsuario() {
       document.getElementById('modalUsuario').classList.remove('open');
-    }
-
-    function guardarUsuario(event) {
-      event.preventDefault();
       
-      const nombre = document.getElementById('userNombre').value.trim();
-      const email = document.getElementById('userEmail').value.trim();
-      const rol = document.getElementById('userRol').value;
-      const password = document.getElementById('userPassword').value.trim();
-      
-      // Crear iniciales
-      const iniciales = nombre.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
-      
-      usuarios.push({
-        nombre: nombre,
-        email: email,
-        rol: rol,
-        telefono: '',
-        estado: 'Invitación pendiente',
-        iniciales: iniciales
-      });
-      
-      cerrarModalUsuario();
-      renderizarEquipo();
-      alert(`✅ Usuario "${nombre}" creado correctamente\nContraseña temporal: ${password}`);
+      const indicador = document.getElementById('indicadorEdicion');
+      if (indicador) indicador.remove();
+      const ayuda = document.getElementById('ayudaEdicion');
+      if (ayuda) ayuda.remove();
+      const btn = document.querySelector('#formEditarPerfil button[type="submit"]');
+      if (btn) btn.textContent = 'Guardar cambios';
     }
 
     // ============================================
     // INICIALIZACIÓN
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-      const userData = sessionStorage.getItem('user');
-      if (!userData) {
-        window.location.href = '../public/login.html';
-        return;
-      }
-      
-      cargarPerfil();
-      renderizarEquipo();
+      auth.onAuthStateChanged((user) => {
+        if (!user) {
+          window.location.href = '../public/login.html';
+          return;
+        }
+        cargarPerfil();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarModalUsuario();
+      });
     });
+
+    // Funciones globales
+    window.abrirModalUsuario = abrirModalUsuario;
+    window.cerrarModalUsuario = cerrarModalUsuario;
+    window.guardarUsuario = guardarUsuario;
+    window.guardarPerfil = guardarPerfil;
+    window.editarUsuario = editarUsuario;
+    window.cargarUsuarios = cargarUsuarios;
   </script>
-
-  <script src="../js/app.js"></script>
 </body>
-  <!-- 🔥 FIREBASE SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-  <!-- 🔥 TUS ARCHIVOS JS (Sin type="module", solo así) -->
-  <script src="../js/conexion.js"></script>
-  <script src="../js/auth.js"></script>
-  <script src="../js/app.js"></script>
 </html>
